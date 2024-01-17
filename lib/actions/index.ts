@@ -1,7 +1,10 @@
 'use server'
 
+import { revalidatePath } from 'next/cache';
+import Product from '../models/product.model';
+import { connectToDB } from '../mongoose';
 import { scrapeAmazonProduct } from '../scraper';
-// import { getAveragePrice, getHighestPrice, getLowestPrice } from '../utils';
+import { getAveragePrice, getHighestPrice, getLowestPrice } from '../utils';
 
 /**
  * Scrape and Store Product.
@@ -16,17 +19,61 @@ export async function scrapeAndStoreProduct(productUrl: string) {
     }
 
     try {
+        connectToDB();
+
         const scrapedProduct = await scrapeAmazonProduct(productUrl);
 
         if (!scrapedProduct) {
             return;
         }
 
-        // Store scraped product to the database.
+        // Store a scraped product to the database.
+        let product = scrapedProduct;
+
+        const existingProduct = await Product.findOne({ url: scrapedProduct.url });
+
+        if (existingProduct) {
+            const updatedPriceHistory: any = [
+                ...existingProduct.priceHistory,
+                { price: scrapedProduct.currentPrice }
+            ]
+
+            product = {
+                ...scrapedProduct,
+                priceHistory: updatedPriceHistory,
+                lowestPrice: getLowestPrice(updatedPriceHistory),
+                highestPrice: getHighestPrice(updatedPriceHistory),
+                averagePrice: getAveragePrice(updatedPriceHistory),
+            }
+        }
+
+        const newProduct = await Product.findOneAndUpdate(
+            { url: scrapedProduct.url },
+            product,
+            { upsert: true, new: true }
+        );
+
+        revalidatePath(`/products/${newProduct._id}`);
 
     } catch (error: any) {
         throw new Error(
             `[scrapeAndStoreProduct]: Failed to create/update product: ${error.message}.`
         )
+    }
+}
+
+export async function getProductById(productId: string) {
+    try {
+        connectToDB();
+
+        const product = await Product.findOne({ _id: productId });
+
+        if (!product) {
+            return null;
+        }
+
+        return product;
+    } catch (error) {
+        console.log(error);
     }
 }
