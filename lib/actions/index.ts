@@ -1,6 +1,7 @@
 'use server'
 
 import { scrapeAmazonProduct } from '../scraper';
+// import { getAveragePrice, getHighestPrice, getLowestPrice } from '../utils';
 
 /**
  * Scrape and Store Product.
@@ -10,13 +11,22 @@ import { scrapeAmazonProduct } from '../scraper';
  * @param productUrl The product URL string to scrape.
  */
 export async function scrapeAndStoreProduct(productUrl: string) {
-  if (!productUrl) {
-    return;
-  }
+    if (!productUrl) {
+        return;
+    }
 
-  try {
-    const scrapedProduct = await scrapeAmazonProduct(productUrl);
-  } catch (error: any) {
-    throw new Error(`Failed to create/update product: ${error.message}.`)
-  }
+    try {
+        const scrapedProduct = await scrapeAmazonProduct(productUrl);
+
+        if (!scrapedProduct) {
+            return;
+        }
+
+        // Store scraped product to the database.
+
+    } catch (error: any) {
+        throw new Error(
+            `[scrapeAndStoreProduct]: Failed to create/update product: ${error.message}.`
+        )
+    }
 }
