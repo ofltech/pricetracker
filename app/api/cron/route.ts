@@ -11,6 +11,11 @@ import Product from '@/lib/models/product.model';
 import { scrapeAmazonProduct } from '@/lib/scraper';
 import { generateEmailBody, sendEmail } from '@/lib/nodemailer';
 
+// This function can run for a maximum of 300 seconds (5 minutes).
+export const maxDuration = 300;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * The {@link GET} request `asynchronous function` is a CRON JOB API route
  * that runs periodically.
@@ -48,7 +53,7 @@ export async function GET() {
                 }
     
                 const updatedProduct = await Product.findOneAndUpdate(
-                    { url: scrapedProduct.url },
+                    { url: product.url },
                     product,
                 );
 
