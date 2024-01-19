@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Fragment } from 'react'
+import { useState, Fragment, FormEvent } from 'react'
 import { Transition, Dialog } from '@headlessui/react';
 import Image from 'next/image'
 import { addUserEmailToProduct } from '@/lib/actions'
